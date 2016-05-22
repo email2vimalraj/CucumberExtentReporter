@@ -14,7 +14,7 @@ import java.util.Map;
  * Created by vimalraj on 11/02/16.
  */
 @RunWith(Cucumber.class)
-@CucumberOptions(features = {"src/test/resources/features/selenium"}, glue = {"com.cucumber.stepdefinitions.selenium"},
+@CucumberOptions(features = {"src/test/resources/features/MyFeature.feature"}, glue = {"com.cucumber.stepdefinitions"},
                     plugin = {"com.cucumber.listener.ExtentCucumberFormatter"})
 public class RunCukesTest {
 

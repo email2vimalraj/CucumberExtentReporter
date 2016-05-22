@@ -24,6 +24,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     private LinkedList<Step> testSteps = new LinkedList<Step>();
     private static File htmlReportDir;
     private static Map systemInfo;
+    private boolean scenarioOutlineTest;
 
     private static final Map<String, String> MIME_TYPES_EXTENSIONS = new HashMap() {
         {
@@ -132,14 +133,16 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     }
 
     public void result(Result result) {
-        if ("passed".equals(result.getStatus())) {
-            scenarioTest.log(LogStatus.PASS, testSteps.poll().getName(), "PASSED");
-        } else if ("failed".equals(result.getStatus())) {
-            scenarioTest.log(LogStatus.FAIL, testSteps.poll().getName(), result.getErrorMessage());
-        } else if ("skipped".equals(result.getStatus())) {
-            scenarioTest.log(LogStatus.SKIP, testSteps.poll().getName(), "SKIPPED");
-        } else if ("undefined".equals(result.getStatus())) {
-            scenarioTest.log(LogStatus.UNKNOWN, testSteps.poll().getName(), "UNDEFINED");
+        if (!scenarioOutlineTest) {
+            if ("passed".equals(result.getStatus())) {
+                scenarioTest.log(LogStatus.PASS, testSteps.poll().getName(), "PASSED");
+            } else if ("failed".equals(result.getStatus())) {
+                scenarioTest.log(LogStatus.FAIL, testSteps.poll().getName(), result.getErrorMessage());
+            } else if ("skipped".equals(result.getStatus())) {
+                scenarioTest.log(LogStatus.SKIP, testSteps.poll().getName(), "SKIPPED");
+            } else if ("undefined".equals(result.getStatus())) {
+                scenarioTest.log(LogStatus.UNKNOWN, testSteps.poll().getName(), "UNDEFINED");
+            }
         }
     }
 
@@ -152,14 +155,17 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     }
 
     public void embedding(String s, byte[] bytes) {
-        String extension = (String)MIME_TYPES_EXTENSIONS.get(s);
-        String fileName = "screenshot-" + System.currentTimeMillis() + "." + extension;
-        this.writeBytesAndClose(bytes, this.reportFileOutputStream(fileName));
-        scenarioTest.log(LogStatus.INFO, scenarioTest.addScreenCapture(fileName));
+        if (!scenarioOutlineTest) {
+            String extension = (String)MIME_TYPES_EXTENSIONS.get(s);
+            String fileName = "screenshot-" + System.currentTimeMillis() + "." + extension;
+            this.writeBytesAndClose(bytes, this.reportFileOutputStream(fileName));
+            scenarioTest.log(LogStatus.INFO, scenarioTest.addScreenCapture(fileName));
+        }
     }
 
     public void write(String s) {
-        scenarioTest.log(LogStatus.INFO, s);
+        if (!scenarioOutlineTest)
+            scenarioTest.log(LogStatus.INFO, s);
     }
 
     public void syntaxError(String s, String s1, List<String> list, String s2, Integer integer) {
@@ -173,7 +179,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     }
 
     public void scenarioOutline(ScenarioOutline scenarioOutline) {
-
+        scenarioOutlineTest = true;
     }
 
     public void examples(Examples examples) {
@@ -185,6 +191,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         for (Tag tag : scenario.getTags()) {
             scenarioTest.assignCategory(tag.getName());
         }
+        scenarioOutlineTest = false;
     }
 
     public void background(Background background) {
@@ -194,12 +201,15 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     }
 
     public void step(Step step) {
-        testSteps.add(step);
+        if (!scenarioOutlineTest)
+            testSteps.add(step);
     }
 
     public void endOfScenarioLifeCycle(Scenario scenario) {
-        extent.endTest(scenarioTest);
-        featureTest.appendChild(scenarioTest);
+        if (!scenarioOutlineTest) {
+            extent.endTest(scenarioTest);
+            featureTest.appendChild(scenarioTest);
+        }
     }
 
     public void done() {
