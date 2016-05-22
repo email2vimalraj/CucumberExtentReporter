@@ -6,7 +6,7 @@
 
     <groupId>com.vimalselvam</groupId>
     <artifactId>cucumber-extentsreport</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>Cucumber Extents Report</name>
@@ -46,7 +46,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cucumber.version>1.2.3</cucumber.version>
-        <extentreports.version>2.40.2</extentreports.version>
+        <extentreports.version>2.41.0</extentreports.version>
     </properties>
 
     <dependencies>
