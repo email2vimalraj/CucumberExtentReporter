@@ -137,7 +137,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
             if ("passed".equals(result.getStatus())) {
                 scenarioTest.log(LogStatus.PASS, testSteps.poll().getName(), "PASSED");
             } else if ("failed".equals(result.getStatus())) {
-                scenarioTest.log(LogStatus.FAIL, testSteps.poll().getName(), result.getErrorMessage());
+                scenarioTest.log(LogStatus.FAIL, testSteps.poll().getName(), result.getError());
             } else if ("skipped".equals(result.getStatus())) {
                 scenarioTest.log(LogStatus.SKIP, testSteps.poll().getName(), "SKIPPED");
             } else if ("undefined".equals(result.getStatus())) {
