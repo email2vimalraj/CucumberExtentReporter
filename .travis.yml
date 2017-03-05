@@ -1,6 +1,6 @@
 language: java
 jdk:
-- openjdk7
+  - oraclejdk8
 notifications:
   email:
   - email2vimalraj@gmail.com
