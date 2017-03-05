@@ -11,6 +11,7 @@ Feature: My First Feature
     | 1    |
     | 2    |
 
+  @scenarioTag
   Scenario: My Second Scenario
     Given I have 7 cukes in my bellies
     Then I print

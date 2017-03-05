@@ -6,7 +6,7 @@
 
     <groupId>com.vimalselvam</groupId>
     <artifactId>cucumber-extentsreport</artifactId>
-    <version>1.1.1</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
 
     <name>Cucumber Extents Report</name>
@@ -45,8 +45,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cucumber.version>1.2.3</cucumber.version>
-        <extentreports.version>2.41.0</extentreports.version>
+        <cucumber.version>1.2.5</cucumber.version>
+        <extentreports.version>3.0.2</extentreports.version>
     </properties>
 
     <dependencies>
@@ -75,18 +75,14 @@
             <groupId>info.cukes</groupId>
             <artifactId>cucumber-java</artifactId>
             <version>${cucumber.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
-            <groupId>com.relevantcodes</groupId>
+            <groupId>com.aventstack</groupId>
             <artifactId>extentreports</artifactId>
             <version>${extentreports.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.directory.studio</groupId>
-            <artifactId>org.apache.commons.codec</artifactId>
-            <version>1.8</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

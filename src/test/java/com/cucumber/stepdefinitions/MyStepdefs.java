@@ -1,26 +1,27 @@
 package com.cucumber.stepdefinitions;
 
+import com.cucumber.listener.Reporter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
+import org.junit.Assert;
 
-/**
- * Created by vimalraj on 12/02/16.
- */
+import java.io.IOException;
+
 public class MyStepdefs {
 
-    @Given("I have (\\d+) cukes in my belly")
-    public void I_have_cukes_in_my_belly(int cukes) {
-        System.out.format("Cukes: %n\n", cukes);
-//        Assert.assertTrue(false);
+    @Given("I have (\\d+) cukes in my belly") public void I_have_cukes_in_my_belly(int cukes)
+        throws IOException {
+        Reporter.addStepLog("My test addStepLog message");
+        Reporter.addScenarioLog("This is scenario log");
+//        Reporter.addScreenCaptureFromPath(
+//            "/Users/vimalrajselvam/Downloads/best-resume-template-2016-3.jpg", "My title");
     }
 
-    @Given("I have (\\d+) cukes in my bellies")
-    public void I_have_cukes_in_my_bellies(int cukes) {
+    @Given("I have (\\d+) cukes in my bellies") public void I_have_cukes_in_my_bellies(int cukes) {
         System.out.format("Cukes: %n\n", cukes);
     }
 
-    @Then("^I print$")
-    public void iPrint() throws Throwable {
-        // Write code here that turns the phrase above into concrete actions
+    @Then("^I print$") public void iPrint() throws Throwable {
+        //        Assert.assertTrue(false);
     }
 }
