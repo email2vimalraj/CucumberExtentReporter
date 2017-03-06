@@ -2,12 +2,22 @@ package com.cucumber.listener;
 
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
-import com.aventstack.extentreports.GherkinKeyword;
+import com.aventstack.extentreports.markuputils.Markup;
 import com.aventstack.extentreports.markuputils.MarkupHelper;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
-import gherkin.formatter.model.*;
+import gherkin.formatter.model.Background;
+import gherkin.formatter.model.DataTableRow;
+import gherkin.formatter.model.Examples;
+import gherkin.formatter.model.ExamplesTableRow;
+import gherkin.formatter.model.Feature;
+import gherkin.formatter.model.Match;
+import gherkin.formatter.model.Result;
+import gherkin.formatter.model.Scenario;
+import gherkin.formatter.model.ScenarioOutline;
+import gherkin.formatter.model.Step;
+import gherkin.formatter.model.Tag;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -30,10 +40,12 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     private boolean scenarioOutlineFlag;
 
     public ExtentCucumberFormatter(File file) {
-        setExtentHtmlReport(new ExtentHtmlReporter(file));
-        ExtentReports extentReports = new ExtentReports();
-        extentReports.attachReporter(getExtentHtmlReport());
-        setExtentReport(extentReports);
+        if (getExtentReport() == null) {
+            setExtentHtmlReport(new ExtentHtmlReporter(file));
+            ExtentReports extentReports = new ExtentReports();
+            extentReports.attachReporter(getExtentHtmlReport());
+            setExtentReport(extentReports);
+        }
         stepListThreadLocal.set(new LinkedList<Step>());
         scenarioOutlineFlag = false;
     }
@@ -104,20 +116,14 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
             scenarioOutlineFlag = false;
         }
 
-//        if (scenario.getKeyword().trim().equalsIgnoreCase("Scenario")) {
-//            scenarioOutlineThreadLocal.set(null);
-//        }
-
         ExtentTest scenarioNode;
         if (scenarioOutlineThreadLocal.get() != null && scenario.getKeyword().trim()
             .equalsIgnoreCase("Scenario Outline")) {
-            scenarioNode = scenarioOutlineThreadLocal.get()
-                .createNode(com.aventstack.extentreports.gherkin.model.Scenario.class,
-                    scenario.getName());
+            scenarioNode =
+                scenarioOutlineThreadLocal.get().createNode("Scenario: " + scenario.getName());
         } else {
-            scenarioNode = featureTestThreadLocal.get()
-                .createNode(com.aventstack.extentreports.gherkin.model.Scenario.class,
-                    scenario.getName());
+            scenarioNode =
+                featureTestThreadLocal.get().createNode("Scenario: " + scenario.getName());
         }
 
         for (Tag tag : scenario.getTags()) {
@@ -183,14 +189,31 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
 
     public void match(Match match) {
         Step step = stepListThreadLocal.get().poll();
-        ExtentTest scenarioTest = scenarioThreadLocal.get();
-        GherkinKeyword keyword = null;
-        try {
-            keyword = new GherkinKeyword(step.getKeyword().trim());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        String data[][] = null;
+        if (step.getRows() != null) {
+            List<DataTableRow> rows = step.getRows();
+            int rowSize = rows.size();
+            for (int i = 0; i < rowSize; i++) {
+                DataTableRow dataTableRow = rows.get(i);
+                List<String> cells = dataTableRow.getCells();
+                int cellSize = cells.size();
+                if (data == null) {
+                    data = new String[rowSize][cellSize];
+                }
+                for (int j = 0; j < cellSize; j++) {
+                    data[i][j] = cells.get(j);
+                }
+            }
         }
-        ExtentTest stepTest = scenarioTest.createNode(keyword, step.getName());
+
+        ExtentTest scenarioTest = scenarioThreadLocal.get();
+        ExtentTest stepTest = scenarioTest.createNode(step.getKeyword() + step.getName());
+
+        if (data != null) {
+            Markup table = MarkupHelper.createTable(data);
+            stepTest.info(table);
+        }
+
         stepTestThreadLocal.set(stepTest);
     }
 

@@ -14,7 +14,7 @@ If you are using a maven based project, you can directly add this library as a d
 <dependency>
     <groupId>com.vimalselvam</groupId>
     <artifactId>cucumber-extentsreport</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 </dependency>
 ```
 

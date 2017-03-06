@@ -6,3 +6,7 @@ Feature: My Second Feature
 
   Scenario: My Second Scenario
     Given I have 7 cukes in my bellies
+    When I login with credentials
+    | user1 | pass1 |
+    | user2 | pass2 |
+    | user3 | pass3 |

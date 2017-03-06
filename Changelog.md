@@ -1,5 +1,9 @@
 # Changelog
 
+### v2.0.1
+- Added a feature to display the data table in the step
+- Fixed the thread safe issue when run in parallel
+
 ### v2.0.0
 - Upgraded to the latest version of ExtentReport and made it provided
 - Fixed scenario outline bugs
