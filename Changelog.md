@@ -1,5 +1,8 @@
 # Changelog
 
+### v2.0.2
+- Fixed the system info when execute from multiple runners
+
 ### v2.0.1
 - Added a feature to display the data table in the step
 - Fixed the thread safe issue when run in parallel

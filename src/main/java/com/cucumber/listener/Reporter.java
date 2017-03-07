@@ -6,12 +6,15 @@ import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class houses few utilities required for the report
  */
 public class Reporter {
+    private static Map<String, Boolean> systemInfoKeyMap = new HashMap<String, Boolean>();
 
     private Reporter() {
         // Defeat instantiation
@@ -104,15 +107,24 @@ public class Reporter {
 
     /**
      * Sets the system information with the given key value pair
-     * @param key The name of the key
+     *
+     * @param key   The name of the key
      * @param value The value of the given key
      */
     public static void setSystemInfo(String key, String value) {
+        if (systemInfoKeyMap.isEmpty() || !systemInfoKeyMap.containsKey(key)) {
+            systemInfoKeyMap.put(key, false);
+        }
+        if (systemInfoKeyMap.get(key)) {
+            return;
+        }
         getExtentReport().setSystemInfo(key, value);
+        systemInfoKeyMap.put(key, true);
     }
 
     /**
      * Sets the test runner output with the given list of strings
+     *
      * @param log The list of string messages
      */
     public static void setTestRunnerOutput(List<String> log) {
@@ -121,6 +133,7 @@ public class Reporter {
 
     /**
      * Sets the test runner output with the given string
+     *
      * @param outputMessage The message to be shown in the test runner output screen
      */
     public static void setTestRunnerOutput(String outputMessage) {
