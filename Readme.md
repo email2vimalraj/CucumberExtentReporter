@@ -14,7 +14,7 @@ If you are using a maven based project, you can directly add this library as a d
 <dependency>
     <groupId>com.vimalselvam</groupId>
     <artifactId>cucumber-extentsreport</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.3</version>
 </dependency>
 ```
 
@@ -63,6 +63,8 @@ public class RunCukesTest {
 }
 
 ```
+
+Please note that the plugin `com.cucumber.listener.ExtentCucumberFormatter` takes an argument of where the report file should be generated. If you omit the parameter of file path, the report will be generated in the `test-output` folder in your project directory by default with the file name as `report.html`.
 
 The above example shows a JUnit runner. However, you can use the TestNG runner too.
 Also make sure the `loadXMLConfig`, `setSystemInfo` and `setTestRunnerOutput` methods should be in your `@AfterClass` method.

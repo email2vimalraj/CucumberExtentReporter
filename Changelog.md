@@ -1,5 +1,8 @@
 # Changelog
 
+### v2.0.3
+- Fixed the bug while running on parallel using TestNG 
+
 ### v2.0.2
 - Fixed the system info when execute from multiple runners
 

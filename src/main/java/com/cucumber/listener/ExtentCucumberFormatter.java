@@ -7,17 +7,7 @@ import com.aventstack.extentreports.markuputils.MarkupHelper;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
-import gherkin.formatter.model.Background;
-import gherkin.formatter.model.DataTableRow;
-import gherkin.formatter.model.Examples;
-import gherkin.formatter.model.ExamplesTableRow;
-import gherkin.formatter.model.Feature;
-import gherkin.formatter.model.Match;
-import gherkin.formatter.model.Result;
-import gherkin.formatter.model.Scenario;
-import gherkin.formatter.model.ScenarioOutline;
-import gherkin.formatter.model.Step;
-import gherkin.formatter.model.Tag;
+import gherkin.formatter.model.*;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -27,43 +17,54 @@ import java.util.List;
  * A cucumber based reporting listener which generates the Extent Report
  */
 public class ExtentCucumberFormatter implements Reporter, Formatter {
-    private static ThreadLocal<ExtentReports> reportsThreadLocal = new ThreadLocal<ExtentReports>();
-    private static ThreadLocal<ExtentHtmlReporter> htmlReporterThreadLocal =
-        new ThreadLocal<ExtentHtmlReporter>();
-    private static ThreadLocal<ExtentTest> featureTestThreadLocal = new ThreadLocal<ExtentTest>();
-    private static ThreadLocal<ExtentTest> scenarioOutlineThreadLocal =
-        new ThreadLocal<ExtentTest>();
-    static ThreadLocal<ExtentTest> scenarioThreadLocal = new ThreadLocal<ExtentTest>();
+    private static ExtentReports extentReports;
+    private static ExtentHtmlReporter htmlReporter;
+    private static ThreadLocal<ExtentTest> featureTestThreadLocal = new InheritableThreadLocal<>();
+    private static ThreadLocal<ExtentTest> scenarioOutlineThreadLocal = new InheritableThreadLocal<>();
+    static ThreadLocal<ExtentTest> scenarioThreadLocal = new InheritableThreadLocal<>();
     private static ThreadLocal<LinkedList<Step>> stepListThreadLocal =
-        new ThreadLocal<LinkedList<Step>>();
-    static ThreadLocal<ExtentTest> stepTestThreadLocal = new ThreadLocal<ExtentTest>();
+        new InheritableThreadLocal<>();
+    static ThreadLocal<ExtentTest> stepTestThreadLocal = new InheritableThreadLocal<>();
     private boolean scenarioOutlineFlag;
 
+    public ExtentCucumberFormatter() {
+        this(null);
+    }
+
     public ExtentCucumberFormatter(File file) {
-        if (getExtentReport() == null) {
-            setExtentHtmlReport(new ExtentHtmlReporter(file));
-            ExtentReports extentReports = new ExtentReports();
-            extentReports.attachReporter(getExtentHtmlReport());
-            setExtentReport(extentReports);
-        }
+        setExtentHtmlReport(file);
+        setExtentReport();
         stepListThreadLocal.set(new LinkedList<Step>());
         scenarioOutlineFlag = false;
     }
 
-    private static void setExtentHtmlReport(ExtentHtmlReporter htmlReport) {
-        htmlReporterThreadLocal.set(htmlReport);
+    private static void setExtentHtmlReport(File file) {
+        if (htmlReporter != null) {
+            return;
+        }
+        if (file == null) {
+            file = new File("test-output/report.html");
+            if (!file.exists()) {
+                file.getParentFile().mkdirs();
+            }
+        }
+        htmlReporter = new ExtentHtmlReporter(file);
     }
 
     static ExtentHtmlReporter getExtentHtmlReport() {
-        return htmlReporterThreadLocal.get();
+        return htmlReporter;
     }
 
-    private static void setExtentReport(ExtentReports extentReports) {
-        reportsThreadLocal.set(extentReports);
+    private static void setExtentReport() {
+        if (extentReports != null) {
+            return;
+        }
+        extentReports = new ExtentReports();
+        extentReports.attachReporter(htmlReporter);
     }
 
     static ExtentReports getExtentReport() {
-        return reportsThreadLocal.get();
+        return extentReports;
     }
 
     public void syntaxError(String state, String event, List<String> legalEvents, String uri,

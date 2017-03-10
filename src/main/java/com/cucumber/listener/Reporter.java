@@ -14,7 +14,7 @@ import java.util.Map;
  * This class houses few utilities required for the report
  */
 public class Reporter {
-    private static Map<String, Boolean> systemInfoKeyMap = new HashMap<String, Boolean>();
+    private static Map<String, Boolean> systemInfoKeyMap = new HashMap<>();
 
     private Reporter() {
         // Defeat instantiation
