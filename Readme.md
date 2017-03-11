@@ -28,7 +28,7 @@ For more details, look at [Changelog](Changelog.md).
 ## Getting Started
 
 ### Runner Class example:
-Create a runner class and add the `com.cucumber.listener.ExtentCucumberFormatter` as a plugin followed by the report file as input.
+Create a runner class and add the `com.cucumber.listener.ExtentCucumberFormatter:output/report.html` as a plugin followed by the report file as input.
 
 A sample example is show below:
 
