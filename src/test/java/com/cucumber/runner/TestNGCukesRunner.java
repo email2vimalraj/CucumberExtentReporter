@@ -10,7 +10,7 @@ import java.io.File;
 @CucumberOptions(
         features = {"src/test/resources/features/MyFeature.feature"},
         glue = {"com.cucumber.stepdefinitions"},
-        plugin = {"com.cucumber.listener.ExtentCucumberFormatter"}
+        plugin = {"com.cucumber.listener.ExtentCucumberFormatter:output/report.html"}
 )
 public class TestNGCukesRunner extends AbstractTestNGCucumberTests {
     @AfterClass
