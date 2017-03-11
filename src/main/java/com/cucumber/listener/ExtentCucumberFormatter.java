@@ -17,6 +17,7 @@ import java.util.List;
  * A cucumber based reporting listener which generates the Extent Report
  */
 public class ExtentCucumberFormatter implements Reporter, Formatter {
+
     private static ExtentReports extentReports;
     private static ExtentHtmlReporter htmlReporter;
     private static ThreadLocal<ExtentTest> featureTestThreadLocal = new InheritableThreadLocal<>();
@@ -26,10 +27,6 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         new InheritableThreadLocal<>();
     static ThreadLocal<ExtentTest> stepTestThreadLocal = new InheritableThreadLocal<>();
     private boolean scenarioOutlineFlag;
-
-    public ExtentCucumberFormatter() {
-        this(null);
-    }
 
     public ExtentCucumberFormatter(File file) {
         setExtentHtmlReport(file);
@@ -42,11 +39,8 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         if (htmlReporter != null) {
             return;
         }
-        if (file == null) {
-            file = new File("test-output/report.html");
-            if (!file.exists()) {
-                file.getParentFile().mkdirs();
-            }
+        if (!file.exists()) {
+            file.getParentFile().mkdirs();
         }
         htmlReporter = new ExtentHtmlReporter(file);
     }

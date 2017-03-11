@@ -64,7 +64,7 @@ public class RunCukesTest {
 
 ```
 
-Please note that the plugin `com.cucumber.listener.ExtentCucumberFormatter` takes an argument of where the report file should be generated. If you omit the parameter of file path, the report will be generated in the `test-output` folder in your project directory by default with the file name as `report.html`.
+Please note that the plugin `com.cucumber.listener.ExtentCucumberFormatter` requires an argument of where the report file should be generated.
 
 The above example shows a JUnit runner. However, you can use the TestNG runner too.
 Also make sure the `loadXMLConfig`, `setSystemInfo` and `setTestRunnerOutput` methods should be in your `@AfterClass` method.
