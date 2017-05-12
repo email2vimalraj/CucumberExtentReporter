@@ -2,6 +2,7 @@ package com.cucumber.listener;
 
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.GherkinKeyword;
 import com.aventstack.extentreports.markuputils.Markup;
 import com.aventstack.extentreports.markuputils.MarkupHelper;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
@@ -71,7 +72,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     }
 
     public void feature(Feature feature) {
-        featureTestThreadLocal.set(getExtentReport().createTest(feature.getName()));
+        featureTestThreadLocal.set(getExtentReport().createTest(com.aventstack.extentreports.gherkin.model.Feature.class, feature.getName()));
         ExtentTest test = featureTestThreadLocal.get();
 
         for (Tag tag : feature.getTags()) {
@@ -82,7 +83,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     public void scenarioOutline(ScenarioOutline scenarioOutline) {
         scenarioOutlineFlag = true;
         ExtentTest node = featureTestThreadLocal.get()
-            .createNode(scenarioOutline.getKeyword() + ": " + scenarioOutline.getName());
+            .createNode(com.aventstack.extentreports.gherkin.model.ScenarioOutline.class, scenarioOutline.getName());
         scenarioOutlineThreadLocal.set(node);
     }
 
@@ -115,10 +116,10 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         if (scenarioOutlineThreadLocal.get() != null && scenario.getKeyword().trim()
             .equalsIgnoreCase("Scenario Outline")) {
             scenarioNode =
-                scenarioOutlineThreadLocal.get().createNode("Scenario: " + scenario.getName());
+                scenarioOutlineThreadLocal.get().createNode(com.aventstack.extentreports.gherkin.model.Scenario.class, scenario.getName());
         } else {
             scenarioNode =
-                featureTestThreadLocal.get().createNode("Scenario: " + scenario.getName());
+                featureTestThreadLocal.get().createNode(com.aventstack.extentreports.gherkin.model.Scenario.class, scenario.getName());
         }
 
         for (Tag tag : scenario.getTags()) {
@@ -202,7 +203,13 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         }
 
         ExtentTest scenarioTest = scenarioThreadLocal.get();
-        ExtentTest stepTest = scenarioTest.createNode(step.getKeyword() + step.getName());
+        ExtentTest stepTest = null;
+
+        try {
+            stepTest = scenarioTest.createNode(new GherkinKeyword(step.getKeyword()), step.getKeyword() + step.getName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
 
         if (data != null) {
             Markup table = MarkupHelper.createTable(data);
