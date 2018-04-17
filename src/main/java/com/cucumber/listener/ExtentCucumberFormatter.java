@@ -7,6 +7,8 @@ import com.aventstack.extentreports.markuputils.Markup;
 import com.aventstack.extentreports.markuputils.MarkupHelper;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 import com.aventstack.extentreports.reporter.ExtentXReporter;
+import com.aventstack.extentreports.reporter.KlovReporter;
+import com.mongodb.MongoClientURI;
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
@@ -23,6 +25,7 @@ import java.util.List;
 public class ExtentCucumberFormatter implements Reporter, Formatter {
     private static ExtentReports extentReports;
     private static ExtentHtmlReporter htmlReporter;
+    private static KlovReporter klovReporter;
     private static ThreadLocal<ExtentTest> featureTestThreadLocal = new InheritableThreadLocal<>();
     private static ThreadLocal<ExtentTest> scenarioOutlineThreadLocal = new InheritableThreadLocal<>();
     static ThreadLocal<ExtentTest> scenarioThreadLocal = new InheritableThreadLocal<>();
@@ -34,6 +37,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
     public ExtentCucumberFormatter(File file) {
         setExtentHtmlReport(file);
         setExtentReport();
+        setKlovReport();
         stepListThreadLocal.set(new LinkedList<>());
         scenarioOutlineFlag = false;
     }
@@ -79,6 +83,61 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
 
     static ExtentReports getExtentReport() {
         return extentReports;
+    }
+
+    /**
+     * When running cucumber tests in parallel Klov reporter should be attached only once, in order to avoid duplicate builds on klov server.
+     */
+    private static synchronized void setKlovReport() {
+        if (extentReports == null) {
+            //Extent reports object not found. call setExtentReport() first
+            return;
+        }
+
+        ExtentProperties extentProperties = ExtentProperties.INSTANCE;
+
+        //if reporter is not null that means it is already attached
+        if (klovReporter != null) {
+            //Already attached, attaching it again will create a new build/klov report
+            return;
+        }
+
+
+        if (extentProperties.getKlovServerUrl() != null) {
+            String hostname = extentProperties.getMongodbHost();
+            int port = extentProperties.getMongodbPort();
+
+            String database = extentProperties.getMongodbDatabase();
+
+            String username = extentProperties.getMongodbUsername();
+            String password = extentProperties.getMongodbPassword();
+
+            try {
+                //Create a new KlovReporter object
+                klovReporter = new KlovReporter();
+
+                if (username != null && password != null) {
+                    MongoClientURI uri = new MongoClientURI("mongodb://" + username + ":" + password + "@" + hostname + ":" + port + "/?authSource=" + database);
+                    klovReporter.initMongoDbConnection(uri);
+                } else {
+                    klovReporter.initMongoDbConnection(hostname, port);
+                }
+
+                klovReporter.setProjectName(extentProperties.getKlovProjectName());
+                klovReporter.setReportName(extentProperties.getKlovReportName());
+                klovReporter.setKlovUrl(extentProperties.getKlovServerUrl());
+
+                extentReports.attachReporter(klovReporter);
+
+            } catch (Exception ex) {
+                klovReporter = null;
+                throw new IllegalArgumentException("Error setting up Klov Reporter", ex);
+            }
+        }
+    }
+
+    static KlovReporter getKlovReport() {
+        return klovReporter;
     }
 
     public void syntaxError(String state, String event, List<String> legalEvents, String uri,

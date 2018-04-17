@@ -3,6 +3,7 @@ package com.cucumber.listener;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
+import com.aventstack.extentreports.reporter.KlovReporter;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +28,15 @@ public class Reporter {
      */
     public static ExtentHtmlReporter getExtentHtmlReport() {
         return ExtentCucumberFormatter.getExtentHtmlReport();
+    }
+
+    /**
+     * Gets the {@link KlovReporter} instance created through listener
+     *
+     * @return The {@link KlovReporter} instance
+     */
+    public static KlovReporter getKlovReport() {
+        return ExtentCucumberFormatter.getKlovReport();
     }
 
     /**
