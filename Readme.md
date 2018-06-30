@@ -118,6 +118,38 @@ You can either setup ExtentX in your local / remote machine using:
 - [A docker approach - 2 minutes to setup](http://www.vimalselvam.com/2017/04/13/shipping-extentx-in-a-docker-container/)
 - [A plain vanilla approach](http://extentreports.com/docs/extentx/)
 
+### Setting up Klov
+The current release added a support for `Klov`. The results of your execution can be sent to `Klov` dashboard.
+
+The `Klov` configurations can be set up using `ExtentProperties` enum as follows:
+
+```java
+plugin = {"com.cucumber.listener.ExtentCucumberFormatter:"}
+......
+......
+@BeforeClass
+public static void setup() {
+    ExtentProperties extentProperties = ExtentProperties.INSTANCE;
+    extentProperties.setKlovServerUrl("http://localhost");
+    // specify project
+    // ! you must specify a project, other a "Default project will be used"
+    extentProperties.setKlovProjectName("MyProject");
+    // you must specify a reportName otherwise a default timestamp will be used
+    extentProperties.setKlovReportName("TestReport");
+    
+    // Mongo DB Configuration
+    extentProperties.setMongodbHost("localhost");
+    extentProperties.setMongodbPort("27017");
+    extentProperties.setMongodbDatabase("klov");
+    
+    // If mongo Db is running in Authentication mode provide username and password 
+    extentProperties.setMongodbUsername("username");
+    extentProperties.setMongodbPassword("password");
+}
+```
+
+You can set up `Klov` on local using: [Klov Demo](http://extentreports.com/docs/klov/)
+
 ### Logging
 User can add logs at any step and those logs will be captured and attached to the corresponding step. The log should be added as follows:
 
