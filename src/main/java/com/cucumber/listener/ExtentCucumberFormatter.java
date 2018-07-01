@@ -65,6 +65,8 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         }
         extentReports = new ExtentReports();
         ExtentProperties extentProperties = ExtentProperties.INSTANCE;
+
+        // Remove this block in the next release
         if (extentProperties.getExtentXServerUrl() != null) {
             String extentXServerUrl = extentProperties.getExtentXServerUrl();
             try {

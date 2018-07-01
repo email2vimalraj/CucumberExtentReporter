@@ -14,7 +14,7 @@ If you are using a maven based project, you can directly add this library as a d
 <dependency>
     <groupId>com.vimalselvam</groupId>
     <artifactId>cucumber-extentsreport</artifactId>
-    <version>3.0.2</version>
+    <version>3.1.0</version>
 </dependency>
 ```
 
@@ -97,26 +97,7 @@ The above example shows a JUnit runner. However, you can use the TestNG runner t
 Also make sure the `loadXMLConfig`, `setSystemInfo` and `setTestRunnerOutput` methods should be in your `@AfterClass` method.
 
 ### Setting up ExtentX
-The current release added a support for `ExtentX`. The results of your execution can be sent to `ExtentX` dashboard.
-
-The `ExtentX` configurations can be set up using `ExtentProperties` enum as follows:
-
-```java
-plugin = {"com.cucumber.listener.ExtentCucumberFormatter:"}
-......
-......
-@BeforeClass
-public static void setup() {
-    ExtentProperties extentProperties = ExtentProperties.INSTANCE;
-    extentProperties.setReportPath("output/myreport.html");
-    extentProperties.setExtentXServerUrl("http://localhost:1337");
-    extentProperties.setProjectName("MyProject");
-}
-```
-
-You can either setup ExtentX in your local / remote machine using:
-- [A docker approach - 2 minutes to setup](http://www.vimalselvam.com/2017/04/13/shipping-extentx-in-a-docker-container/)
-- [A plain vanilla approach](http://extentreports.com/docs/extentx/)
+Since ExtentReport does not support ExtentX anymore, we have deprecated the ExtentX and added support for [Klov](#setting-up-klov). Thanks to (@msingh3)[https://github.com/msingh3] for the contribution.
 
 ### Setting up Klov
 The current release added a support for `Klov`. The results of your execution can be sent to `Klov` dashboard.

@@ -6,7 +6,7 @@
 
     <groupId>com.vimalselvam</groupId>
     <artifactId>cucumber-extentsreport</artifactId>
-    <version>3.0.2</version>
+    <version>3.1.0</version>
     <build>
         <plugins>
             <plugin>
@@ -58,7 +58,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cucumber.version>1.2.5</cucumber.version>
-        <extentreports.version>3.1.1</extentreports.version>
     </properties>
 
     <dependencies>
@@ -100,7 +99,7 @@
         <dependency>
             <groupId>com.aventstack</groupId>
             <artifactId>extentreports</artifactId>
-            <version>${extentreports.version}</version>
+            <version>[3.1.1,)</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

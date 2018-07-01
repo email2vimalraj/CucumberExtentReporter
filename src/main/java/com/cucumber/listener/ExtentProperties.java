@@ -47,6 +47,7 @@ public enum ExtentProperties {
      * Gets the ExtentX server URL
      * @return The ExtentX server URL
      */
+    @Deprecated
     public String getExtentXServerUrl() {
         return extentXServerUrl;
     }
@@ -55,6 +56,7 @@ public enum ExtentProperties {
      * Sets the ExtentX server URL
      * @param extentXServerUrl The ExtentX server URL
      */
+    @Deprecated
     public void setExtentXServerUrl(String extentXServerUrl) {
         this.extentXServerUrl = extentXServerUrl;
     }
