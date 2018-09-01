@@ -1,7 +1,6 @@
 package com.vimalselvam.cucumber.stepdefinitions;
 
 import com.vimalselvam.cucumber.listener.Reporter;
-import cucumber.api.DataTable;
 import cucumber.api.Scenario;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
@@ -35,6 +34,6 @@ public class MyStepdefs {
         //        Assert.assertTrue(false);
     }
 
-    @When("^I login with credentials$") public void iLoginWithCredentials(DataTable table) {
+    @When("^I login with credentials$") public void iLoginWithCredentials(io.cucumber.datatable.DataTable table) {
     }
 }

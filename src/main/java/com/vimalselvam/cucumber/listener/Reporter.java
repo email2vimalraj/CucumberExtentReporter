@@ -159,10 +159,10 @@ public class Reporter {
     }
 
     private static ExtentTest getCurrentStep() {
-        return ExtentCucumberFormatter.stepTestThreadLocal.get();
+        return ExtentCucumberFormatter.currentStep.test;
     }
 
     private static ExtentTest getCurrentScenario() {
-        return ExtentCucumberFormatter.scenarioThreadLocal.get();
+        return ExtentCucumberFormatter.currentScenario.test;
     }
 }
