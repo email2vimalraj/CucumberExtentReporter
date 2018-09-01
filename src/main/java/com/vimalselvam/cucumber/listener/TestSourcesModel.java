@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Shameless copy from cucumber.runtime.formatter.TestSourcesModel
  */
-final class TestSourcesModel {
+public class TestSourcesModel {
     private final Map<String, TestSourceRead> pathToReadEventMap = new HashMap<String, TestSourceRead>();
     private final Map<String, GherkinDocument> pathToAstMap = new HashMap<String, GherkinDocument>();
     private final Map<String, Map<Integer, AstNode>> pathToNodeMap = new HashMap<String, Map<Integer, AstNode>>();
