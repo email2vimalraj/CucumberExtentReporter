@@ -1,7 +1,7 @@
 # Cucumber Extent Reporter
 
 <ins>__Disclaimer__</ins>:
-This repository is no more maintained since Extent report latest versions targetting more commercial. I'll be publishing my own report plugin for all the test frameworks soon and will be published here.
+This repository is no more maintained. I'll be publishing my own report plugin for all the test frameworks soon and will be updated here.
 
 This tool helps you to generate the custom cucumber-jvm report using ExtentReports plugin.
 
