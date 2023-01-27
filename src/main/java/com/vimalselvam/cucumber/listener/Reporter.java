@@ -4,6 +4,7 @@ import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 import com.aventstack.extentreports.reporter.KlovReporter;
+import com.vimalselvam.cucumber.listener.state.ThreadLocalExtentState;
 
 import java.io.File;
 import java.io.IOException;
@@ -159,10 +160,10 @@ public class Reporter {
     }
 
     private static ExtentTest getCurrentStep() {
-        return ExtentCucumberFormatter.stepTestThreadLocal.get();
+        return ThreadLocalExtentState.getState().getCurrentStep().getTest();
     }
 
     private static ExtentTest getCurrentScenario() {
-        return ExtentCucumberFormatter.scenarioThreadLocal.get();
+        return ThreadLocalExtentState.getState().getCurrentScenario().getTest();
     }
 }

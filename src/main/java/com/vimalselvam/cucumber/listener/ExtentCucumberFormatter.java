@@ -3,46 +3,162 @@ package com.vimalselvam.cucumber.listener;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.GherkinKeyword;
-import com.aventstack.extentreports.markuputils.Markup;
-import com.aventstack.extentreports.markuputils.MarkupHelper;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 import com.aventstack.extentreports.reporter.ExtentXReporter;
 import com.aventstack.extentreports.reporter.KlovReporter;
 import com.mongodb.MongoClientURI;
-import gherkin.formatter.Formatter;
-import gherkin.formatter.Reporter;
-import gherkin.formatter.model.*;
+import com.vimalselvam.cucumber.listener.state.*;
+import cucumber.api.PickleStepTestStep;
+import cucumber.api.Result;
+import cucumber.api.TestStep;
+import cucumber.api.event.*;
+import cucumber.api.formatter.Formatter;
+import gherkin.ast.*;
+import io.atlassian.fugue.Either;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.LinkedList;
 import java.util.List;
+
+import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
 
 /**
  * A cucumber based reporting listener which generates the Extent Report
  */
-public class ExtentCucumberFormatter implements Reporter, Formatter {
+public class ExtentCucumberFormatter implements Formatter {
+
     private static ExtentReports extentReports;
-    private static ExtentHtmlReporter htmlReporter;
     private static KlovReporter klovReporter;
-    private static ThreadLocal<ExtentTest> featureTestThreadLocal = new InheritableThreadLocal<>();
-    private static ThreadLocal<ExtentTest> scenarioOutlineThreadLocal = new InheritableThreadLocal<>();
-    static ThreadLocal<ExtentTest> scenarioThreadLocal = new InheritableThreadLocal<>();
-    private static ThreadLocal<LinkedList<Step>> stepListThreadLocal =
-        new InheritableThreadLocal<>();
-    static ThreadLocal<ExtentTest> stepTestThreadLocal = new InheritableThreadLocal<>();
-    private boolean scenarioOutlineFlag;
+    private static ExtentHtmlReporter htmlReporter;
+
+    @Override
+    public void setEventPublisher(final EventPublisher publisher) {
+        publisher.registerHandlerFor(TestSourceRead.class, this::handleTestSourceRead);
+        publisher.registerHandlerFor(TestCaseStarted.class, this::handleTestCaseStarted);
+        publisher.registerHandlerFor(TestStepStarted.class, this::handleTestStepStarted);
+        publisher.registerHandlerFor(TestStepFinished.class, this::handleTestStepFinished);
+        publisher.registerHandlerFor(TestRunFinished.class, this::handleTestRunFinished);
+    }
+
+    private void handleTestSourceRead(final TestSourceRead event) {
+        ThreadLocalExtentState.modifyState(state -> {
+            final TestSourcesModel testSourcesModel = state.getTestSourcesModel();
+            testSourcesModel.addTestSourceReadEvent(event.uri, event);
+            final Feature feature = testSourcesModel.getFeature(event.uri);
+            final ExtentTest test = extentReports.createTest(com.aventstack.extentreports.gherkin.model.Feature.class, escapeHtml4(feature.getName()), escapeHtml4(feature.getDescription()));
+            feature.getTags().forEach(tag -> test.assignCategory(tag.getName()));
+            final ExtentFeature extentFeature = new ExtentFeature(feature, test);
+            state.putFeature(event.uri, extentFeature);
+
+            return state;
+        });
+    }
+
+    private void handleTestCaseStarted(final TestCaseStarted event) {
+        ThreadLocalExtentState.modifyState(state -> {
+            final String uri = event.testCase.getUri();
+            final ExtentFeature extentFeature = state.getFeature(uri).orElseThrow(() -> new IllegalStateException("Got no feature for test case '" + uri + "'."));
+            final TestSourcesModel.AstNode astNode = state.getTestSourcesModel().getAstNode(uri, event.testCase.getLine());
+            final ScenarioDefinition scenarioDefinition = TestSourcesModel.getScenarioDefinition(astNode);
+            try {
+                final ExtentTest test = extentFeature.getTest().createNode(new GherkinKeyword(scenarioDefinition.getKeyword()), escapeHtml4(scenarioDefinition.getName()), escapeHtml4(scenarioDefinition.getName()));
+                Either<Scenario, ScenarioOutline> scenario;
+                if (scenarioDefinition instanceof Scenario) {
+                    scenario = Either.left((Scenario) scenarioDefinition);
+                } else if (scenarioDefinition instanceof ScenarioOutline) {
+                    scenario = Either.right((ScenarioOutline) scenarioDefinition);
+                } else {
+                    throw new IllegalStateException("Unknown test case of type '" + scenarioDefinition.getClass().getCanonicalName() + "'.");
+                }
+                final List<Tag> tags = scenario.fold(Scenario::getTags, ScenarioOutline::getTags);
+                extentFeature.getFeature().getTags().forEach(tag -> test.assignCategory(tag.getName()));
+                tags.forEach(tag -> test.assignCategory(tag.getName()));
+                final ExtentScenario extentScenario = new ExtentScenario(scenario, test);
+
+                return ExtentState.ExtentStateBuilder
+                        .anExtentState(state)
+                        .withCurrentFeature(extentFeature)
+                        .withCurrentScenario(extentScenario)
+                        .build();
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException("Unknown keyword '" + scenarioDefinition.getKeyword() + "'.");
+            }
+        });
+
+    }
+
+    private void handleTestStepStarted(final TestStepStarted event) {
+        ThreadLocalExtentState.modifyState(state -> {
+            final TestStep testStep = event.testStep;
+            if (!(testStep instanceof PickleStepTestStep)) {
+                return state;
+            }
+            final PickleStepTestStep pickleStepTestStep = (PickleStepTestStep) testStep;
+            final List<Step> steps = state.getCurrentScenario().getScenario().fold(ScenarioDefinition::getSteps, ScenarioDefinition::getSteps);
+            final Step foundStep = steps.stream()
+                    .filter(step -> step.getLocation().getLine() == pickleStepTestStep.getStepLine())
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Could not find step at line " + pickleStepTestStep.getStepLine()));
+
+            try {
+                final ExtentTest test = state.getCurrentScenario().getTest().createNode(new GherkinKeyword(foundStep.getKeyword()), escapeHtml4(pickleStepTestStep.getStepText()));
+                final ExtentStep currentStep = new ExtentStep(pickleStepTestStep, test);
+
+                return ExtentState.ExtentStateBuilder.anExtentState(state).withCurrentStep(currentStep).build();
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException("Unknown step keyword '" + foundStep.getKeyword() + "'.");
+            }
+        });
+    }
+
+    private void handleTestStepFinished(final TestStepFinished finished) {
+        ThreadLocalExtentState.modifyState(state -> {
+            final ExtentStep currentStep = state.getCurrentStep();
+            if (currentStep == null) {
+                return state;
+            }
+
+            final Result.Type status = finished.result.getStatus();
+            final ExtentTest test = currentStep.getTest();
+            switch (status) {
+                case PASSED:
+                    test.pass(status.firstLetterCapitalizedName());
+                    break;
+                case FAILED:
+                    final Throwable error = finished.result.getError();
+                    final String errorMessage = finished.result.getErrorMessage();
+                    if (error != null) {
+                        test.error(error);
+                    } else if (errorMessage != null) {
+                        test.error(errorMessage);
+                    } else {
+                        test.fail(status.firstLetterCapitalizedName());
+                    }
+                    break;
+                case PENDING:
+                case SKIPPED:
+                case AMBIGUOUS:
+                case UNDEFINED:
+                    test.skip(status.firstLetterCapitalizedName());
+                    break;
+            }
+
+            return ExtentState.ExtentStateBuilder.anExtentState(state).withCurrentStep(null).build();
+        });
+    }
+
+    private void handleTestRunFinished(final TestRunFinished event) {
+        extentReports.flush();
+    }
 
     public ExtentCucumberFormatter(File file) {
         setExtentHtmlReport(file);
         setExtentReport();
         setKlovReport();
-        stepListThreadLocal.set(new LinkedList<>());
-        scenarioOutlineFlag = false;
     }
 
-    private static void setExtentHtmlReport(File file) {
+    private void setExtentHtmlReport(File file) {
         if (htmlReporter != null) {
             return;
         }
@@ -59,7 +175,7 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         return htmlReporter;
     }
 
-    private static void setExtentReport() {
+    private void setExtentReport() {
         if (extentReports != null) {
             return;
         }
@@ -87,10 +203,10 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
         return extentReports;
     }
 
-    /**
-     * When running cucumber tests in parallel Klov reporter should be attached only once, in order to avoid duplicate builds on klov server.
-     */
-    private static synchronized void setKlovReport() {
+    // /**
+    //  * When running cucumber tests in parallel Klov reporter should be attached only once, in order to avoid duplicate builds on klov server.
+    //  */
+    private synchronized void setKlovReport() {
         if (extentReports == null) {
             //Extent reports object not found. call setExtentReport() first
             return;
@@ -140,170 +256,5 @@ public class ExtentCucumberFormatter implements Reporter, Formatter {
 
     static KlovReporter getKlovReport() {
         return klovReporter;
-    }
-
-    public void syntaxError(String state, String event, List<String> legalEvents, String uri,
-        Integer line) {
-
-    }
-
-    public void uri(String uri) {
-
-    }
-
-    public void feature(Feature feature) {
-        featureTestThreadLocal.set(getExtentReport().createTest(com.aventstack.extentreports.gherkin.model.Feature.class, feature.getName()));
-        ExtentTest test = featureTestThreadLocal.get();
-
-        for (Tag tag : feature.getTags()) {
-            test.assignCategory(tag.getName());
-        }
-    }
-
-    public void scenarioOutline(ScenarioOutline scenarioOutline) {
-        scenarioOutlineFlag = true;
-        ExtentTest node = featureTestThreadLocal.get()
-            .createNode(com.aventstack.extentreports.gherkin.model.ScenarioOutline.class, scenarioOutline.getName());
-        scenarioOutlineThreadLocal.set(node);
-    }
-
-    public void examples(Examples examples) {
-        ExtentTest test = scenarioOutlineThreadLocal.get();
-
-        String[][] data = null;
-        List<ExamplesTableRow> rows = examples.getRows();
-        int rowSize = rows.size();
-        for (int i = 0; i < rowSize; i++) {
-            ExamplesTableRow examplesTableRow = rows.get(i);
-            List<String> cells = examplesTableRow.getCells();
-            int cellSize = cells.size();
-            if (data == null) {
-                data = new String[rowSize][cellSize];
-            }
-            for (int j = 0; j < cellSize; j++) {
-                data[i][j] = cells.get(j);
-            }
-        }
-        test.info(MarkupHelper.createTable(data));
-    }
-
-    public void startOfScenarioLifeCycle(Scenario scenario) {
-        if (scenarioOutlineFlag) {
-            scenarioOutlineFlag = false;
-        }
-
-        ExtentTest scenarioNode;
-        if (scenarioOutlineThreadLocal.get() != null && scenario.getKeyword().trim()
-            .equalsIgnoreCase("Scenario Outline")) {
-            scenarioNode =
-                scenarioOutlineThreadLocal.get().createNode(com.aventstack.extentreports.gherkin.model.Scenario.class, scenario.getName());
-        } else {
-            scenarioNode =
-                featureTestThreadLocal.get().createNode(com.aventstack.extentreports.gherkin.model.Scenario.class, scenario.getName());
-        }
-
-        for (Tag tag : scenario.getTags()) {
-            scenarioNode.assignCategory(tag.getName());
-        }
-        scenarioThreadLocal.set(scenarioNode);
-    }
-
-    public void background(Background background) {
-
-    }
-
-    public void scenario(Scenario scenario) {
-
-    }
-
-    public void step(Step step) {
-        if (scenarioOutlineFlag) {
-            return;
-        }
-        stepListThreadLocal.get().add(step);
-    }
-
-    public void endOfScenarioLifeCycle(Scenario scenario) {
-
-    }
-
-    public void done() {
-        getExtentReport().flush();
-    }
-
-    public void close() {
-
-    }
-
-    public void eof() {
-
-    }
-
-    public void before(Match match, Result result) {
-
-    }
-
-    public void result(Result result) {
-        if (scenarioOutlineFlag) {
-            return;
-        }
-
-        if (Result.PASSED.equals(result.getStatus())) {
-            stepTestThreadLocal.get().pass(Result.PASSED);
-        } else if (Result.FAILED.equals(result.getStatus())) {
-            stepTestThreadLocal.get().fail(result.getError());
-        } else if (Result.SKIPPED.equals(result)) {
-            stepTestThreadLocal.get().skip(Result.SKIPPED.getStatus());
-        } else if (Result.UNDEFINED.equals(result)) {
-            stepTestThreadLocal.get().skip(Result.UNDEFINED.getStatus());
-        }
-    }
-
-    public void after(Match match, Result result) {
-
-    }
-
-    public void match(Match match) {
-        Step step = stepListThreadLocal.get().poll();
-        String data[][] = null;
-        if (step.getRows() != null) {
-            List<DataTableRow> rows = step.getRows();
-            int rowSize = rows.size();
-            for (int i = 0; i < rowSize; i++) {
-                DataTableRow dataTableRow = rows.get(i);
-                List<String> cells = dataTableRow.getCells();
-                int cellSize = cells.size();
-                if (data == null) {
-                    data = new String[rowSize][cellSize];
-                }
-                for (int j = 0; j < cellSize; j++) {
-                    data[i][j] = cells.get(j);
-                }
-            }
-        }
-
-        ExtentTest scenarioTest = scenarioThreadLocal.get();
-        ExtentTest stepTest = null;
-
-        try {
-            stepTest = scenarioTest.createNode(new GherkinKeyword(step.getKeyword()), step.getKeyword() + step.getName());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        if (data != null) {
-            Markup table = MarkupHelper.createTable(data);
-            stepTest.info(table);
-        }
-
-        stepTestThreadLocal.set(stepTest);
-    }
-
-    public void embedding(String mimeType, byte[] data) {
-
-    }
-
-    public void write(String text) {
-
     }
 }
